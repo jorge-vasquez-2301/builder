@@ -83,26 +83,25 @@ fn parse_builder_struct(
 fn attributes_from_syn(attrs: Vec<syn::Attribute>) -> ParseResult<Vec<BuilderAttribute>> {
     use syn::parse2;
     let mut ours = Vec::new();
-    let mut errs = Vec::new();
+    let mut errs = SyntaxErrors::default();
 
-    let parsed_attrs = attrs.into_iter().filter_map(|attr| {
-        if attr.path.is_ident("builder") {
-            Some(parse2::<BuilderAttributeBody>(attr.tokens).map(|body| body.0))
-        } else {
-            None
-        }
-    });
-
-    for attr in parsed_attrs {
-        match attr {
+    attrs
+        .into_iter()
+        .filter_map(|attr| {
+            if attr.path.is_ident("builder") {
+                Some(parse2::<BuilderAttributeBody>(attr.tokens).map(|body| body.0))
+            } else {
+                None
+            }
+        })
+        .for_each(|result| match result {
             Ok(v) => ours.extend(v),
             Err(e) => errs.push(e),
-        }
-    }
+        });
 
     if errs.is_empty() {
         Ok(ours)
     } else {
-        Err(errs.into())
+        Err(errs)
     }
 }

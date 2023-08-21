@@ -21,6 +21,10 @@ impl From<SyntaxErrors> for Vec<syn::Error> {
 }
 
 impl SyntaxErrors {
+    pub fn push(&mut self, error: syn::Error) {
+        self.inner.push(error);
+    }
+
     pub fn add<D, T>(&mut self, tts: T, description: D)
     where
         D: fmt::Display,
