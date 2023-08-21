@@ -14,6 +14,12 @@ impl From<Vec<syn::Error>> for SyntaxErrors {
     }
 }
 
+impl From<SyntaxErrors> for Vec<syn::Error> {
+    fn from(errors: SyntaxErrors) -> Self {
+        errors.inner
+    }
+}
+
 impl SyntaxErrors {
     pub fn add<D, T>(&mut self, tts: T, description: D)
     where
@@ -23,16 +29,12 @@ impl SyntaxErrors {
         self.inner.push(syn::Error::new_spanned(tts, description));
     }
 
-    pub fn extend(&mut self, errors: SyntaxErrors) {
-        self.inner.extend(errors.inner);
+    pub fn extend<T: Into<Vec<syn::Error>>>(&mut self, errors: T) {
+        self.inner.extend(errors.into());
     }
 
-    pub fn finish(self) -> ParseResult<()> {
-        if self.inner.is_empty() {
-            Ok(())
-        } else {
-            Err(self)
-        }
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
     }
 
     pub fn to_compile_errors(self) -> proc_macro2::TokenStream {

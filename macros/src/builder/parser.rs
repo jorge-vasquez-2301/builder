@@ -49,10 +49,12 @@ fn parse_builder_struct(
     let fields = match struct_.fields {
         Fields::Named(fields) => fields,
         _ => {
-            errors.extend(vec![syn::Error::new(span, "only named fields are supported")].into());
-            return Err(errors
-                .finish()
-                .expect_err("just added an error so there should be one"));
+            errors.extend(vec![syn::Error::new(
+                span,
+                "only named fields are supported",
+            )]);
+
+            return Err(errors);
         }
     };
     let fields = fields
@@ -67,13 +69,15 @@ fn parse_builder_struct(
         })
         .collect();
 
-    errors.finish()?;
-
-    Ok(BuilderInfo {
-        name,
-        generics,
-        fields,
-    })
+    if errors.is_empty() {
+        Ok(BuilderInfo {
+            name,
+            generics,
+            fields,
+        })
+    } else {
+        Err(errors)
+    }
 }
 
 fn attributes_from_syn(attrs: Vec<syn::Attribute>) -> ParseResult<Vec<BuilderAttribute>> {
@@ -95,6 +99,7 @@ fn attributes_from_syn(attrs: Vec<syn::Attribute>) -> ParseResult<Vec<BuilderAtt
             Err(e) => errs.push(e),
         }
     }
+
     if errs.is_empty() {
         Ok(ours)
     } else {
